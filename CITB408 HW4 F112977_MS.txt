@@ -1,0 +1,173 @@
+import java.io.*;
+import java.math.*;
+import java.security.*;
+import java.text.*;
+import java.util.*;
+import java.util.concurrent.*;
+import java.util.function.*;
+import java.util.regex.*;
+import java.util.stream.*;
+import static java.util.stream.Collectors.joining;
+import static java.util.stream.Collectors.toList;
+
+enum ContractType {
+    PERMANENT, PART_TIME, TRAINEE
+}
+
+class Employee {
+    private static int counter = 0;
+    private final int id;
+    private final String name;
+    private final int workedHours;
+    private BigDecimal additionalSalaryPerHour;
+    private final ContractType contractType;
+    private static final Map<ContractType, BigDecimal> minSalaries = new EnumMap<>(ContractType.class);
+
+    public static void setMinSalary(ContractType type, BigDecimal salary) {
+        minSalaries.put(type, salary);
+    }
+
+    public Employee(String name, int workedHours, BigDecimal additionalSalaryPerHour, ContractType contractType) {
+        this.id = ++counter;
+        this.name = name;
+        this.workedHours = workedHours;
+        this.additionalSalaryPerHour = additionalSalaryPerHour;
+        this.contractType = contractType;
+    }
+
+    public BigDecimal salary() {
+        BigDecimal totalPerHour = minSalaries.get(contractType).add(additionalSalaryPerHour);
+        return totalPerHour.multiply(BigDecimal.valueOf(workedHours));
+    }
+
+    public void increaseSalary(BigDecimal percent) {
+        if (percent.compareTo(BigDecimal.ZERO) > 0) {
+            BigDecimal multiplier = BigDecimal.ONE.add(percent.divide(BigDecimal.valueOf(100)));
+            additionalSalaryPerHour = additionalSalaryPerHour.multiply(multiplier);
+        }
+    }
+
+    public ContractType getContractType() {
+        return contractType;
+    }
+}
+
+class Company {
+    private final String name;
+    private final int maxEmployees;
+    private final List<Employee> employees;
+
+    public Company(String name, int maxEmployees) {
+        this.name = name;
+        this.maxEmployees = maxEmployees;
+        this.employees = new ArrayList<>();
+    }
+
+    public void hireEmployee(Employee employee) {
+        if (employees.size() < maxEmployees && !employees.contains(employee)) {
+            employees.add(employee);
+        }
+    }
+
+    public void fireEmployee(Employee employee) {
+        employees.remove(employee);
+    }
+
+    public BigDecimal averageSalary() {
+        if (employees.isEmpty()) return BigDecimal.ZERO;
+        BigDecimal total = employees.stream()
+            .map(Employee::salary)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+        return total.divide(BigDecimal.valueOf(employees.size()), 2, RoundingMode.HALF_UP);
+    }
+
+    public void increaseSalaries(BigDecimal percent) {
+        if (percent.compareTo(BigDecimal.ZERO) > 0) {
+            for (Employee e : employees) {
+                e.increaseSalary(percent);
+            }
+        }
+    }
+
+    public BigDecimal averageSalaryByType(ContractType contractType) {
+        List<Employee> filtered = employees.stream()
+            .filter(e -> e.getContractType() == contractType)
+            .collect(Collectors.toList());
+
+        if (filtered.isEmpty()) return BigDecimal.ZERO;
+
+        BigDecimal total = filtered.stream()
+            .map(Employee::salary)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        return total.divide(BigDecimal.valueOf(filtered.size()), 2, RoundingMode.HALF_UP);
+    }
+}
+
+public class Solution {
+       public static void main(String[] args) throws IOException {
+        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(System.in));
+
+        String companyName = bufferedReader.readLine();
+
+        int maxNumberOfEmployees = Integer.parseInt(bufferedReader.readLine().trim());
+
+        List<Double> minSalaryList = Stream.of(bufferedReader.readLine().trim().split(" "))
+            .map(Double::parseDouble)
+            .collect(Collectors.toList());
+
+        List<String> namesList = Stream.of(bufferedReader.readLine().trim().split(" "))
+            .collect(Collectors.toList());
+
+        List<Integer> workedHoursList = Stream.of(bufferedReader.readLine().trim().split(" "))
+            .map(Integer::parseInt)
+            .collect(Collectors.toList());
+
+        List<String> contractTypeList = Stream.of(bufferedReader.readLine().trim().split(" "))
+            .collect(Collectors.toList());
+
+        List<Double> additionalSalaryList = Stream.of(bufferedReader.readLine().trim().split(" "))
+            .map(Double::parseDouble)
+            .collect(Collectors.toList());
+
+        String contractType = bufferedReader.readLine().trim();
+
+        double increasePercentage = Double.parseDouble(bufferedReader.readLine().trim());
+
+        // Set min salaries per contract type
+        Employee.setMinSalary(ContractType.PERMANENT, BigDecimal.valueOf(minSalaryList.get(0)));
+        Employee.setMinSalary(ContractType.PART_TIME, BigDecimal.valueOf(minSalaryList.get(1)));
+        Employee.setMinSalary(ContractType.TRAINEE, BigDecimal.valueOf(minSalaryList.get(2)));
+
+        // Create company
+        Company company = new Company(companyName, maxNumberOfEmployees);
+
+        // Create and hire employees
+        for (int i = 0; i < namesList.size(); i++) {
+            Employee employee = new Employee(
+                namesList.get(i),
+                workedHoursList.get(i),
+                BigDecimal.valueOf(additionalSalaryList.get(i)),
+                ContractType.valueOf(contractTypeList.get(i))
+            );
+            company.hireEmployee(employee);
+        }
+
+        // Output average salary
+        BigDecimal avg1 = company.averageSalary();
+        System.out.println(avg1.compareTo(BigDecimal.ZERO) == 0 ? "0" : avg1.setScale(2, RoundingMode.HALF_UP));
+
+        // Increase additional salaries
+        company.increaseSalaries(BigDecimal.valueOf(increasePercentage));
+
+        // Output new average salary
+        BigDecimal avg2 = company.averageSalary();
+        System.out.println(avg2.compareTo(BigDecimal.ZERO) == 0 ? "0" : avg2.setScale(2, RoundingMode.HALF_UP));
+
+        // Output average salary by contract type
+        BigDecimal avg3 = company.averageSalaryByType(ContractType.valueOf(contractType));
+        System.out.println(avg3.compareTo(BigDecimal.ZERO) == 0 ? "0" : avg3.setScale(2, RoundingMode.HALF_UP));
+
+        bufferedReader.close();
+    }
+}

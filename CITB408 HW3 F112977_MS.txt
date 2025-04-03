@@ -1,0 +1,121 @@
+import java.io.*;
+import java.math.*;
+import java.security.*;
+import java.text.*;
+import java.util.*;
+import java.util.concurrent.*;
+import java.util.function.*;
+import java.util.regex.*;
+import java.util.stream.*;
+import static java.util.stream.Collectors.joining;
+import static java.util.stream.Collectors.toList;
+
+    
+    interface Deliverable {
+    double deliveryPrice();
+}
+
+    abstract class DeliverableItem implements Deliverable {
+    protected boolean toClientAddress;
+    protected static double additionalPrice;
+
+    public DeliverableItem(boolean toClientAddress) {
+        this.toClientAddress = toClientAddress;
+    }
+
+    public static void setAdditionalPrice(double price) {
+        additionalPrice = price > 0 ? price : 1;
+    }
+}
+ 
+    class Document extends DeliverableItem {
+    private double minPrice;
+
+    public Document(boolean toClientAddress, double minPrice) {
+        super(toClientAddress);
+        this.minPrice = minPrice > 0 ? minPrice : 1;
+    }
+
+    @Override
+    public double deliveryPrice() {
+        if (toClientAddress) {
+            return minPrice + additionalPrice;
+        } else {
+            return minPrice;
+        }
+    }
+}
+    
+class Material {
+    private String name;
+    private boolean isFragile;
+
+    public Material(String name, boolean isFragile) {
+        this.name = name;
+        this.isFragile = isFragile == true;
+    }
+
+    public boolean isFragile() {
+        return isFragile;
+    }
+}
+
+    class WeightedItem extends DeliverableItem {
+    private Material material;
+    private double weight;
+    private double pricePerKg;
+
+    public WeightedItem(boolean toClientAddress, Material material, double weight, double pricePerKg) {
+        super(toClientAddress);
+        this.material = material;
+        this.weight = weight > 0 ? weight : 1;
+        this.pricePerKg = pricePerKg > 0 ? pricePerKg : 1;
+    }
+
+    @Override
+    public double deliveryPrice() {
+        double price = weight * pricePerKg;
+        if (toClientAddress) {
+            price += additionalPrice;
+        }
+        if (material.isFragile()) {
+            price *= 1.01;
+        }
+        return price;
+    }
+}
+
+
+public class Solution {
+
+    
+    
+    public static void main(String[] args) throws IOException {
+        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(System.in));
+
+        String materialName = bufferedReader.readLine();
+
+        boolean isFragile = Integer.parseInt(bufferedReader.readLine().trim()) != 0;
+
+        boolean toClientsAddress = Integer.parseInt(bufferedReader.readLine().trim()) != 0;
+
+        double minPrice = Double.parseDouble(bufferedReader.readLine().trim());
+
+        double weight = Double.parseDouble(bufferedReader.readLine().trim());
+
+        double pricePerKg = Double.parseDouble(bufferedReader.readLine().trim());
+
+        double additionalPrice = Double.parseDouble(bufferedReader.readLine().trim());
+
+     DeliverableItem.setAdditionalPrice(additionalPrice);
+
+        Material material = new Material(materialName, isFragile);
+        Deliverable doc = new Document(toClientsAddress == true, minPrice);
+        System.out.println(doc.deliveryPrice());
+
+        Deliverable weightedItem = new WeightedItem(toClientsAddress == true, material, weight, pricePerKg);
+        System.out.println(weightedItem.deliveryPrice());
+
+        bufferedReader.close();
+    }
+}

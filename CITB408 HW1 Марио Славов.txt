@@ -1,0 +1,245 @@
+Task 1
+
+import java.util.Scanner;
+
+public class DigitRotation {
+    public static int countValidNumbers(int bottom, int top, int difference) {
+        int count = 0;
+        for (int num = bottom; num <= top; num++) {
+            int rotated = rotateFirstDigit(num);
+            if (rotated - num > difference) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    private static int rotateFirstDigit(int num) {
+        String strNum = String.valueOf(num);
+        if (strNum.length() < 2) {
+            return num;
+        }
+        String rotatedStr = strNum.substring(1) + strNum.charAt(0);
+        return Integer.parseInt(rotatedStr);
+    }
+
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+        int bottom = scanner.nextInt();
+        int top = scanner.nextInt();
+        int difference = scanner.nextInt();
+        scanner.close();
+
+        if (bottom < 0 || top < 0) {
+            System.out.println(0);
+        } else {
+            System.out.println(countValidNumbers(bottom, top, difference));
+        }
+    }
+}
+
+Task 2
+
+import java.util.Scanner;
+
+public class SumTask {
+
+    public static int SumGeneratedNumbers(int size)
+    {
+        int sum = 0;
+
+        if (size < 1 || size > 9)
+        {
+            return 0;
+        }
+
+        for (int i = 1; i <= size; i++)
+        {
+            for (int j = i; j <= size; j++)
+            {
+                sum += (j*2);
+            }
+        }
+
+        return (sum*2) - (size*2);
+    }
+
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+        int size = scanner.nextInt();
+        scanner.close();
+        System.out.println(SumGeneratedNumbers(size));
+    }
+}
+
+Task 3
+
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
+import java.util.Scanner;
+
+class Manager {
+    private String name;
+    private LocalDate hireDate;
+
+    public Manager(String name) {
+        this.name = name;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public LocalDate getHireDate() {
+        return hireDate;
+    }
+
+    public void setHireDate(int year, int month, int day) {
+        LocalDate date = LocalDate.of(year, month, day);
+        LocalDate today = LocalDate.now();
+
+        if (date.isAfter(today)) {
+            this.hireDate = LocalDate.of(2020, 1, 1);
+        } else {
+            this.hireDate = date;
+        }
+    }
+
+    public int numberOfYearsInCompanyTill(int year, int month, int day) {
+        LocalDate givenDate = LocalDate.of(year, month, day);
+        return (int) ChronoUnit.YEARS.between(hireDate, givenDate);
+    }
+}
+
+public class MangersClass {
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+
+        String name = scanner.nextLine();
+        int hireYear = scanner.nextInt();
+        int hireMonth = scanner.nextInt();
+        int hireDay = scanner.nextInt();
+        int currentYear = scanner.nextInt();
+        int currentMonth = scanner.nextInt();
+        int currentDay = scanner.nextInt();
+
+        Manager manager = new Manager(name);
+        manager.setHireDate(hireYear, hireMonth, hireDay);
+
+        System.out.println(manager.getHireDate());
+        System.out.println(manager.numberOfYearsInCompanyTill(currentYear, currentMonth, currentDay));
+
+        scanner.close();
+    }
+}
+
+Task 4
+
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.Scanner;
+
+class Studio {
+    private final int id;
+    private BigDecimal pricePerHour;
+    private int maxWorkingHours;
+    private int workedHours;
+    private static BigDecimal minPricePerHour = BigDecimal.ZERO;
+    private static BigDecimal currencyEuro;
+
+    public Studio(int id, int maxWorkingHours) {
+        this.id = id;
+        this.maxWorkingHours = (maxWorkingHours >= 0 && maxWorkingHours <= 24) ? maxWorkingHours : 24;
+        this.workedHours = 0;
+    }
+
+    public static void setMinPricePerHour(BigDecimal minPrice) {
+        minPricePerHour = minPrice.compareTo(BigDecimal.ZERO) >= 0 ? minPrice : BigDecimal.ZERO;
+    }
+
+    public static void setCurrencyEuro(BigDecimal currency) {
+        currencyEuro = currency;
+    }
+
+    public void setPricePerHour(BigDecimal price) {
+        this.pricePerHour = price.compareTo(minPricePerHour) >= 0 ? price : minPricePerHour;
+    }
+
+    public void setWorkedHours(int hours) {
+        this.workedHours = (hours <= maxWorkingHours) ? hours : maxWorkingHours;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public BigDecimal getPricePerHour() {
+        return pricePerHour;
+    }
+
+    public int getMaxWorkingHours() {
+        return maxWorkingHours;
+    }
+
+    public int getWorkedHours() {
+        return workedHours;
+    }
+
+    public static BigDecimal getMinPricePerHour() {
+        return minPricePerHour;
+    }
+
+    public static BigDecimal getCurrencyEuro() {
+        return currencyEuro;
+    }
+
+    public BigDecimal getTurnoverInLev() {
+        return pricePerHour.multiply(BigDecimal.valueOf(workedHours)).setScale(1, RoundingMode.HALF_UP);
+    }
+
+    public BigDecimal getTurnoverInEuro() {
+        return getTurnoverInLev().multiply(currencyEuro).setScale(3, RoundingMode.HALF_UP);
+    }
+
+    public static Studio compareByPrice(Studio s1, Studio s2) {
+        return s1.getPricePerHour().compareTo(s2.getPricePerHour()) > 0 ? s1 : s2;
+    }
+
+    public static boolean compareByTurnover(Studio s1, Studio s2) {
+        return s1.getTurnoverInLev().compareTo(s2.getTurnoverInLev()) > 0;
+    }
+}
+
+public class StudioTask {
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+
+        int id1 = scanner.nextInt();
+        int maxHours1 = scanner.nextInt();
+        BigDecimal minPrice = scanner.nextBigDecimal();
+        BigDecimal currency = scanner.nextBigDecimal();
+        BigDecimal price1 = scanner.nextBigDecimal();
+        int workedHours1 = scanner.nextInt();
+
+        int id2 = scanner.nextInt();
+        int maxHours2 = scanner.nextInt();
+        BigDecimal price2 = scanner.nextBigDecimal();
+        int workedHours2 = scanner.nextInt();
+
+        Studio.setMinPricePerHour(minPrice);
+        Studio.setCurrencyEuro(currency);
+
+        Studio studio1 = new Studio(id1, maxHours1);
+        studio1.setPricePerHour(price1);
+        studio1.setWorkedHours(workedHours1);
+
+        Studio studio2 = new Studio(id2, maxHours2);
+        studio2.setPricePerHour(price2);
+        studio2.setWorkedHours(workedHours2);
+
+        System.out.println(studio1.getTurnoverInLev());
+        System.out.println(studio1.getTurnoverInEuro());
+        System.out.println(Studio.compareByPrice(studio1, studio2).getId());
+        System.out.println(Studio.compareByTurnover(studio1, studio2));
+    }
+}
